@@ -100,6 +100,13 @@ pub trait Interpolate<T>: Sized + Copy {
   fn cubic_bezier_mirrored(t: T, a: Self, u: Self, v: Self, b: Self) -> Self;
 }
 
+/// Values whose interpolation can be derived. This trait will calculate the derivative of the spline for a given interpolator `t` if it exists.
+///
+/// If the derivative of the spline at the given interpolator does not exists (e.g. in step interpolation at the position of the step) the methods MUST return [None].
+pub trait InterpolateDerivative<T>: Sized + Copy {
+  fn cubic_hermite(t: T, x: (T, Self), a: (T, Self), b: (T, Self), y: (T, Self)) -> Option<Self>;
+}
+
 #[macro_export]
 macro_rules! impl_Interpolate {
   ($t:ty, $v:ty, $pi:expr) => {

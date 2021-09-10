@@ -14,6 +14,7 @@ use core::ops::{Div, Mul};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "std")]
 use std::cmp::Ordering;
+use crate::interpolate::InterpolateDerivative;
 
 /// Spline curve used to provide interpolation between control points (keys).
 ///
@@ -241,6 +242,92 @@ impl<T, V> Spline<T, V> {
     V: Interpolate<T>,
   {
     self.clamped_sample_with_key(t).map(|sampled| sampled.value)
+  }
+
+  pub fn sample_derivative_with_key(&self, t: T) -> Option<SampledWithKey<V>>
+    where
+        T: Interpolator,
+        V: InterpolateDerivative<T>,
+  {
+    let keys = &self.0;
+    let i = search_lower_cp(keys, t)?;
+    let cp0 = &keys[i];
+
+    let value = match cp0.interpolation {
+      Interpolation::Step(_threshold) => unimplemented!(), /*{
+        let cp1 = &keys[i + 1];
+        let nt = t.normalize(cp0.t, cp1.t);
+        let value = V::step(nt, threshold, cp0.value, cp1.value);
+
+        Some(value)
+      }*/
+
+      Interpolation::Linear => unimplemented!(), /*{
+        let cp1 = &keys[i + 1];
+        let nt = t.normalize(cp0.t, cp1.t);
+        let value = V::lerp(nt, cp0.value, cp1.value);
+
+        Some(value)
+      }*/
+
+      Interpolation::Cosine => unimplemented!(),/*{
+        let cp1 = &keys[i + 1];
+        let nt = t.normalize(cp0.t, cp1.t);
+        let value = V::cosine(nt, cp0.value, cp1.value);
+
+        Some(value)
+      }*/
+
+      Interpolation::CatmullRom => {
+        // We need at least four points for Catmull Rom; ensure we have them, otherwise, return
+        // None.
+        if i == 0 || i >= keys.len() - 2 {
+          None
+        } else {
+          let cp1 = &keys[i + 1];
+          let cpm0 = &keys[i - 1];
+          let cpm1 = &keys[i + 2];
+          let nt = t.normalize(cp0.t, cp1.t);
+          let value = V::cubic_hermite(
+            nt,
+            (cpm0.t, cpm0.value),
+            (cp0.t, cp0.value),
+            (cp1.t, cp1.value),
+            (cpm1.t, cpm1.value),
+          );
+
+          Some(value)
+        }
+      }
+
+      Interpolation::Bezier(_u) | Interpolation::StrokeBezier(_, _u) => unimplemented!() ,/*{
+        // We need to check the next control point to see whether we want quadratic or cubic Bezier.
+        let cp1 = &keys[i + 1];
+        let nt = t.normalize(cp0.t, cp1.t);
+
+        let value = match cp1.interpolation {
+          Interpolation::Bezier(v) => V::cubic_bezier_mirrored(nt, cp0.value, u, v, cp1.value),
+
+          Interpolation::StrokeBezier(v, _) => V::cubic_bezier(nt, cp0.value, u, v, cp1.value),
+
+          _ => V::quadratic_bezier(nt, cp0.value, u, cp1.value),
+        };
+
+        Some(value)
+      }*/
+    };
+
+    value.flatten().map(|value| SampledWithKey { value, key: i })
+  }
+
+  /// Sample a spline at a given time.
+  ///
+  pub fn sample_derivative(&self, t: T) -> Option<V>
+    where
+        T: Interpolator,
+        V: InterpolateDerivative<T>,
+  {
+    self.sample_derivative_with_key(t).map(|sampled| sampled.value)
   }
 
   /// Add a key into the spline.
