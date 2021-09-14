@@ -1,7 +1,8 @@
 use crate::impl_Interpolate;
 
-use cgmath::{Quaternion, Vector1, Vector2, Vector3, Vector4};
+use cgmath::{Quaternion, Vector1, Vector2, Vector3, Vector4, MetricSpace};
 use crate::interpolate::InterpolateDerivative;
+use cgmath::num_traits::Pow;
 
 impl_Interpolate!(f32, Vector1<f32>, std::f32::consts::PI);
 impl_Interpolate!(f32, Vector2<f32>, std::f32::consts::PI);
@@ -18,9 +19,13 @@ impl_Interpolate!(f64, Quaternion<f64>, std::f64::consts::PI);
 impl InterpolateDerivative<f64> for Vector2<f64> {
     fn cubic_hermite(t: f64, x: (f64, Self), a: (f64, Self), b: (f64, Self), y: (f64, Self)) -> Option<Self> {
         let (t0, p0) = x;
-        let (t1, p1) = a;
-        let (t2, p2) = b;
-        let (t3, p3) = y;
+        let (_, p1) = a;
+        let (_, p2) = b;
+        let (_, p3) = y;
+
+        let t1 = p0.distance(p1).pow(0.5) + t0;
+        let t2 = p1.distance(p2).pow(0.5) + t1;
+        let t3 = p2.distance(p3).pow(0.5) + t2;
 
         let a1 = (t1 - t) / (t1 - t0) * p0 + (t - t0) / (t1 - t0) * p1;
         let a2 = (t2 - t) / (t2 - t1) * p1 + (t - t1) / (t2 - t1) * p2;
