@@ -45,4 +45,24 @@ impl InterpolateDerivative<f64> for Vector2<f64> {
             1f64 / (t2 - t1) * (b2 - b1) + (t2 - t) / (t2 - t1) * b1_der_t + (t - t1) / (t2 - t1) * b2_der_t
         )
     }
+
+    fn quadratic_bezier_derivative(t: f64, a: Self, u: Self, b: Self) -> Self {
+        2. * (1. - t) * (u - a) + 2. * t * (b - u)
+    }
+
+    // a -> P0
+    // u -> P1
+    // v -> P2
+    // b -> P3
+    fn cubic_bezier_derivative(t: f64, a: Self, u: Self, v: Self, b: Self) -> Self {
+        let one_t = 1. - t;
+        let one_t2 = one_t * one_t;
+        let t2 = t * t;
+
+        3. * one_t2 * (u - a) + 6. * one_t * t * (v - u) + 3. * t2 * (b - v)
+    }
+
+    fn cubic_bezier_mirrored_derivative(t: f64, a: Self, u: Self, v: Self, b: Self) -> Self {
+        Self::cubic_bezier_derivative(t, a, u, b + b - v, b)
+    }
 }

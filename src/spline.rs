@@ -300,21 +300,21 @@ impl<T, V> Spline<T, V> {
         }
       }
 
-      Interpolation::Bezier(_u) | Interpolation::StrokeBezier(_, _u) => unimplemented!() ,/*{
+      Interpolation::Bezier(u) | Interpolation::StrokeBezier(_, u) => {
         // We need to check the next control point to see whether we want quadratic or cubic Bezier.
         let cp1 = &keys[i + 1];
         let nt = t.normalize(cp0.t, cp1.t);
 
         let value = match cp1.interpolation {
-          Interpolation::Bezier(v) => V::cubic_bezier_mirrored(nt, cp0.value, u, v, cp1.value),
+          Interpolation::Bezier(v) => V::cubic_bezier_mirrored_derivative(nt, cp0.value, u, v, cp1.value),
 
-          Interpolation::StrokeBezier(v, _) => V::cubic_bezier(nt, cp0.value, u, v, cp1.value),
+          Interpolation::StrokeBezier(v, _) => V::cubic_bezier_derivative(nt, cp0.value, u, v, cp1.value),
 
-          _ => V::quadratic_bezier(nt, cp0.value, u, cp1.value),
+          _ => V::quadratic_bezier_derivative(nt, cp0.value, u, cp1.value),
         };
 
-        Some(value)
-      }*/
+        Some(Some(value))
+      }
     };
 
     value.flatten().map(|value| SampledWithKey { value, key: i })
