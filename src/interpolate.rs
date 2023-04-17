@@ -104,8 +104,10 @@ pub trait Interpolate<T>: Sized + Copy {
 ///
 /// If the derivative of the spline at the given interpolator does not exists (e.g. in step interpolation at the position of the step) the methods MUST return [None].
 pub trait InterpolateDerivative<T>: Sized + Copy {
-  fn cubic_hermite(t: T, x: (T, Self), a: (T, Self), b: (T, Self), y: (T, Self)) -> Option<Self>;
+  /// Linear interpolation.
+  fn lerp(t: T, a: Self, b: Self) -> Self;
 
+  fn cubic_hermite(t: T, x: (T, Self), a: (T, Self), b: (T, Self), y: (T, Self)) -> Option<Self>;
 
   /// Quadratic Bézier interpolation.
   ///
@@ -117,6 +119,10 @@ pub trait InterpolateDerivative<T>: Sized + Copy {
   /// `a` is the first point; `b` is the second point; `u` is the output tangent of `a` to the curve and `v` is the
   /// input tangent of `b` to the curve.
   fn cubic_bezier_derivative(t: T, a: Self, u: Self, v: Self, b: Self) -> Self;
+
+  fn cubic_bezier_second_derivative(t: T, a: Self, u: Self, v: Self, b: Self) -> Self;
+
+  fn cubic_bezier_mirrored_second_derivative(t: T, a: Self, u: Self, v: Self, b: Self) -> Self;
 
   /// Cubic Bézier interpolation – special case for non-explicit second tangent.
   ///
